@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Water Monitor</title>
+<style>
+ body{font-family:sans-serif;max-width:600px;margin:20px auto;padding:0 16px}
+ .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+ .card{border-radius:10px;padding:14px;background:#e8f5e9;text-align:center}
+ .bad{background:#ffebee}.v{font-size:28px;font-weight:bold}
+</style></head><body>
+<h2>Water Monitor</h2><p id="status">Loading...</p>
+<div class="cards">
+ <div class="card" id="cT">Temp<div class="v" id="t">--</div>°C</div>
+ <div class="card" id="cP">pH<div class="v" id="p">--</div></div>
+ <div class="card" id="cN">NH3<div class="v" id="n">--</div>ppm</div>
+</div>
+<script>
+async function load(){
+  try{
+    const d = await (await fetch('/api/blynk')).json();
+    if(d.error){status.textContent='Blynk error: '+d.error.message;return;}
+    const temp=+d.v0, ph=+d.v1, nh3=+d.v2, alert=+d.v3;
+    t.textContent=temp.toFixed(1); p.textContent=ph.toFixed(2); n.textContent=nh3.toFixed(3);
+    cT.className='card'+(temp<=22||temp>=33?' bad':'');
+    cP.className='card'+(ph<6.5||ph>9?' bad':'');
+    cN.className='card'+(nh3>0.2?' bad':'');
+    status.textContent=(alert?'⚠️ ALERT':'✅ All OK')+' — checked '+new Date().toLocaleTimeString();
+  }catch(e){status.textContent='Cannot reach server';}
+}
+load(); setInterval(load,5000);
+</script></body></html>
